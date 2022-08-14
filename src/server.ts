@@ -35,7 +35,7 @@ console.log(redisClient);
 (
     async () => {
         await redisClient.connect();
-        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socker.url}`)
+        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socket.url}`)
     }
 )();
 
