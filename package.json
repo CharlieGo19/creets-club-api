@@ -2,7 +2,7 @@
   "name": "creets-gtm-api",
   "version": "0.0.1",
   "description": "CREETS: Gathering the Magic Game API",
-  "main": "./src/server.ts",
+  "main": "server.ts",
   "scripts": {
     "start": "ts-node server.ts",
     "dev": "npx nodemon server.ts",
