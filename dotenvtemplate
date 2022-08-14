@@ -1,0 +1,12 @@
+PORT="3002"
+
+DISCORD_CLIENT_ID = ""
+DISCORD_CLIENT_SECRET = ""
+DISCORD_AUTH_REDIRECT_URL = "http://localhost:3002/api/v0/auth/discord/"
+DISCORD_API_TOKEN_URL = "https://discord.com/api/v8/oauth2/token"
+DISCORD_API_IDENTITY_URL = "https://discord.com/api/v8/users/@me"
+
+DATABASE_URL="postgresql://postgres:postgres@localhost:3003/gtm-users"
+
+REDIS_PORT = "3004"
+REDIS_HOST = "127.0.0.1"
