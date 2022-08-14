@@ -9,6 +9,7 @@ import rootRouter from './routes/root';
 import authRouter from './routes/auth';
 import dotenv from 'dotenv';
 import requestip from 'request-ip';
+import compression from 'compression';
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use(session({
     })
 );
 app.use(requestip.mw());
+app.use(compression());
 
 app.disable('x-powered-by');
 
