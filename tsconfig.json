@@ -6,7 +6,7 @@
     "removeComments": true,
     "noImplicitAny": false,
     "rootDir": "src",
-    "outDir": "./build",
+    "outDir": "build",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,                                      /* Enable all strict type-checking options. */

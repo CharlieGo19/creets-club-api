@@ -4,7 +4,7 @@
   "description": "CREETS: Gathering the Magic Game API",
   "main": "server.ts",
   "scripts": {
-    "start": "ts-node server.ts",
+    "start": "node ./build/server.js",
     "dev": "npx nodemon server.ts",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
