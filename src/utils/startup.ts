@@ -144,7 +144,7 @@ export class Env {
     }
 
     GetRedisClientOptions(): any {
-        if (this.#redisUrl != undefined) {
+        if (this.#redisUrl === undefined) {
             return <RedisClientOptions>{
                 socket: {
                     host: this.#redisHost,
