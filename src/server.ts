@@ -34,7 +34,7 @@ export const redisClient: RedisClientType = createClient(env.GetRedisClientOptio
 (
     async () => {
         await redisClient.connect();
-        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socket.url}`)
+        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socket.host}`)
     }
 )();
 

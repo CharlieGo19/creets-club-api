@@ -66,6 +66,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
         next(discServerErr);
     } else {
         if (env.IsSet()) {
+            console.log('Submitted to discord...');
             const discBearerTokenCallBody: URLSearchParams = new URLSearchParams();
             discBearerTokenCallBody.append('client_id', env.GetDiscClientId());
             discBearerTokenCallBody.append('client_secret', env.GetDiscClientSecret());
@@ -82,7 +83,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         Authorization: 'Bearer ' + discTokenResp.data.access_token,
                     },
                 }
-
+                console.log('Getting at me...')
                 const discAtMeResp: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> = await axios(atMeReqOptions);
                 try {
                     const userData: {
