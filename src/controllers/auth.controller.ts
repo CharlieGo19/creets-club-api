@@ -6,9 +6,6 @@ import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { PrismaClient } from '@prisma/client'
 import { redisClient } from '../server';
 import { SHA256, enc } from 'crypto-js'
-import session from 'express-session';
-
-// https://discord.com/api/oauth2/authorize?client_id=998353071329509397&redirect_uri=http%3A%2F%2Flocalhost%3A3002%2Fapi%2Fv0%2Fauth%2Fdiscord%2F&response_type=code&scope=identify
 
 dotenv.config();
 
@@ -115,6 +112,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                             await redisClient.v4.del(`gtm:${userData.user_login_info.session_id}`);
 
                         } catch(err) {
+                            console.log('Line 115:', err);
                             next(err);
 
                         }
@@ -159,15 +157,15 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
 
                     res.status(200).json({
                         status: 200,
-                        statusText: '200 OK.'
+                        statusText: '200 OK.',
                     });
 
                 } catch(err) {
-
                     res.status(401).json({
                         status: 401,
                         statusText: '401 Unauthorised.'
                     });
+                    
                 }
 
             } else {

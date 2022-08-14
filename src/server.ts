@@ -31,9 +31,11 @@ let redisStore = require('connect-redis')(session);
 
 export const redisClient: RedisClientType = createClient(env.GetRedisClientOptions());
 
+console.log(redisClient);
 (
     async () => {
         await redisClient.connect();
+        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socker.url}`)
     }
 )();
 
