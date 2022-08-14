@@ -28,10 +28,9 @@ declare module 'express-session' {
 };
 
 let redisStore = require('connect-redis')(session);
-
+// TODO: Set production env variables in client and connect remotely.
 export const redisClient: RedisClientType = createClient(env.GetRedisClientOptions());
 
-console.log(redisClient);
 (
     async () => {
         await redisClient.connect();
@@ -79,4 +78,3 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 // Start server
 app.listen(env.GetPort(), () => console.log(`Server is listening on port ${env.GetPort()}!`));
-

@@ -60,7 +60,9 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
     const discRespErr: Error = new Error('internal authentication error');
     discRespErr.name = 'BAD_AUTHENTICATION_INPUT'
 
+    console.log('Debug: 63 ', req.query.code);
     if (!req.query.code) {
+        console.log('Line 64: Code not sent.');
         next(discServerErr);
     } else {
         if (env.IsSet()) {
@@ -165,7 +167,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         status: 401,
                         statusText: '401 Unauthorised.'
                     });
-                    
+
                 }
 
             } else {
