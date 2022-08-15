@@ -50,6 +50,7 @@ app.use(session({
         }),
         cookie: {
             httpOnly: true,
+            secure: true
         },
         saveUninitialized: false,
         resave: false
