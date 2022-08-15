@@ -17,5 +17,6 @@ CREATE TABLE IF NOT EXISTS user_login_info (
     refresh_token VARCHAR(256),
     constraint fk_users_login
         foreign key (user_id)
-        REFERENCES users (user_id)
+        REFERENCES users (user_id),
+    PRIMARY KEY (user_id)
 );

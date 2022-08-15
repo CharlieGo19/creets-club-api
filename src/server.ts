@@ -34,10 +34,9 @@ export const redisClient: RedisClientType = createClient(env.GetRedisClientOptio
 (
     async () => {
         await redisClient.connect();
-        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socket.host}`)
+        console.log(`Connected to redis on: ${env.GetRedisClientOptions().socket.host}`);
     }
 )();
-
 
 app.use(cors());
 app.use(helmet());
@@ -49,10 +48,14 @@ app.use(session({
             prefix: 'gtm:',
             ttl: TOKEN_TTL_IN_SECONDS
         }),
+        cookie: {
+            httpOnly: true,
+        },
         saveUninitialized: false,
         resave: false
     })
 );
+
 app.use(requestip.mw());
 app.use(compression());
 

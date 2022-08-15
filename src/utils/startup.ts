@@ -82,7 +82,7 @@ export class Env {
         }
 
         if (process.env.REDIS_PASSWORD) {
-            this.#redisPassword;
+            this.#redisPassword = process.env.REDIS_PASSWORD;
         }
     }
 
@@ -157,10 +157,10 @@ export class Env {
                 socket: {
                     host: this.#redisHost,
                     port: this.#redisPort,
-                    url: this.#redisUrl,
                     username: this.#redisUser,
                     password: this.#redisPassword
                 },
+                url: this.#redisUrl,
                 legacyMode: true
             }
         }

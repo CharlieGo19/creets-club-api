@@ -52,6 +52,7 @@ interface DiscordIdentifyUserData {
     mfa_enable: boolean
     premium_type: number
 }
+
 // TODO: Logut. 
 export async function DiscAuthLogic(req: Request, res: Response, next: NextFunction) {
     const discServerErr: Error = new Error('could not contact discord servers');
@@ -60,11 +61,10 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
     const discRespErr: Error = new Error('internal authentication error');
     discRespErr.name = 'BAD_AUTHENTICATION_INPUT'
 
-    console.log('Debug: 63 ', req.query.code);
     if (!req.query.code) {
-        console.log('Line 64: Code not sent.');
         next(discServerErr);
-    } else {
+
+    }else{
         if (env.IsSet()) {
             console.log('Submitted to discord...');
             const discBearerTokenCallBody: URLSearchParams = new URLSearchParams();
@@ -83,7 +83,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         Authorization: 'Bearer ' + discTokenResp.data.access_token,
                     },
                 }
-                console.log('Getting at me...')
+
                 const discAtMeResp: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> = await axios(atMeReqOptions);
                 try {
                     const userData: {
@@ -114,8 +114,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                             // Do not check response, if it didn't exist, we are ok.
                             await redisClient.v4.del(`gtm:${userData.user_login_info.session_id}`);
 
-                        } catch(err) {
-                            console.log('Line 115:', err);
+                        }catch(err){
                             next(err);
 
                         }
@@ -163,19 +162,18 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         statusText: '200 OK.',
                     });
 
-                } catch(err) {
+                }catch(err){
                     res.status(401).json({
                         status: 401,
                         statusText: '401 Unauthorised.'
                     });
-
                 }
 
-            } else {
+            }else{
                 next(discRespErr);
 
             }
-        } else {
+        }else{
             next(discServerErr);
 
         }
@@ -202,7 +200,7 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                         statusText: '401 Unauthorised.'
                     }); // TODO: Redirect User on 401 client side.
 
-                } else {
+                }else{
                     try {
                         const userTokens: {
                             'user_id': number,
@@ -233,7 +231,7 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                 statusText: '401 Unauthorised.'
                             });
                             
-                        } else {
+                        }else{
                             const bearerHash: string | undefined = SHA256(userTokens.user_login_info.bearer_token).toString(enc.Base64) // TODO: Add a salt?
 
                             if (bearerHash !== req.session.user.bearerToken) {
@@ -243,7 +241,7 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                     statusText: '401 Unauthorised.'
                                 });
 
-                            } else {
+                            }else{
                                 req.session.destroy;
                                 // refresh login.
                                 if (env.IsSet()) {
@@ -289,14 +287,13 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                                         refresh_token: discTokenResp.data.refresh_token
                                                     }
                                                 });
-                                            } catch (err) {
-                                                console.log(err)
+                                            }catch(err){
                                                 // TODO: if err, retry updating DB, if x attempts fail, destroy session, return server err.
                                                 // subtract x from ttl for each err.
                                             }
                                         }
 
-                                    } else { 
+                                    }else{ 
                                         // TODO: Turn this into internal error - pass message to re auth with disc.
                                         res.status(401).json({
                                             status: 401,
@@ -306,31 +303,27 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                 }
                             }
                         }
-
                         next();
 
-                    } catch (err) {
+                    }catch (err){
                         next(err)
 
                     }
                 }
-            } else {
-                // Next() ig?
+            }else{
+                next();
 
             }
-
-            
-        } catch(err) {
+        }catch(err){
             next(err)
         }
 
-    } else {
+    }else{
         // Redirect
         res.status(401).json({
             status: 401,
             statusText: '401 Unauthorised.'
         });
-
     }
 }
 // TODO: Incorporate the below into authUser
@@ -355,7 +348,7 @@ async function redeemDiscordToken(params: URLSearchParams, next: NextFunction)
                 const discTokenResp: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> = await axios(tokenReq);
                     return discTokenResp;
                 
-            } catch(err) {
+            }catch(err){
                 attemptsRemaining--;
                 if(attemptsRemaining === 0) {
                     next(err);
