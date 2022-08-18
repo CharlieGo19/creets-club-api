@@ -7,7 +7,7 @@ INSERT INTO users (disc_id) VALUES
     ('Healthycheekums#3639'),
     ('holdAdoor#0420'),
     ('Lucky#0094'),
-    ('0.0.Monke#4550'),
+    ('jake993#7361'),
     ('DPAK#7421'),
     ('Exatorian#6106'),
     ('HANGRY#4463'),
