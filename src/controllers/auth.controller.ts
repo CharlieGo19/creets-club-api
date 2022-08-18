@@ -1,16 +1,13 @@
-import e, { NextFunction, Request, Response } from 'express';
-import { Env } from '../utils/startup';
+import { NextFunction, Request, Response } from 'express';
 import { OAUTH_PROVERIDER_DISCORD, TOKEN_TTL_IN_MILLISECONDS } from '../utils/constants'
 import dotenv from 'dotenv';
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { PrismaClient } from '@prisma/client'
-import { redisClient } from '../server';
-import { SHA256, enc } from 'crypto-js'
+import { redisClient, env, prisma } from '../server';
+import { SHA256, enc } from 'crypto-js';
 
 dotenv.config();
 
-const env: Env = new Env();
-const prisma: PrismaClient = new PrismaClient(); // TODO: Configure logging.
+//const env: Env = new Env();
 
 interface DiscordOAuthRequestData {
     url: string
@@ -65,7 +62,6 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
         next(discServerErr);
     }else{
         if (env.IsSet()) {
-            console.log('Submitted to discord...');
             const discBearerTokenCallBody: URLSearchParams = new URLSearchParams();
             discBearerTokenCallBody.append('client_id', env.GetDiscClientId());
             discBearerTokenCallBody.append('client_secret', env.GetDiscClientSecret());
@@ -117,6 +113,14 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                             }
                         }
                         // TODO: Check if origin_ip is null, if null, update.
+                        await prisma.users.update({
+                            where: {
+                                user_id:  userData.user_id
+                            },
+                            data: {
+                                disc_avatar: discAtMeResp.data.avatar
+                            }
+                        });
                         await prisma.user_login_info.upsert({
                             where: {
                                 user_id: userData.user_id
@@ -142,7 +146,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                                 oauth_provider: OAUTH_PROVERIDER_DISCORD,
                                 bearer_token: discTokenResp?.data.access_token,
                                 refresh_token: discTokenResp?.data.refresh_token
-                            }
+                            }, 
                         });
                         // @ts-ignore
                         const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?}
@@ -177,6 +181,7 @@ export function AppleAuthLogic(): string {
     return 'Coming soon, 🍎 bro. ✌🏼';
 }
 
+// TODO: Some form of update for user avatar.
 // TODO: Add session_id to these queries & check on reauth.
 export async function authUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (req.session.user != null) {
@@ -223,7 +228,6 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                 status: 401,
                                 statusText: '401 Unauthorised.'
                             });
-                            
                         }else{
                             const bearerHash: string | undefined = SHA256(userTokens.user_login_info.bearer_token).toString(enc.Base64) // TODO: Add a salt?
 
@@ -285,7 +289,6 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                                 // subtract x from ttl for each err.
                                             }
                                         }
-
                                     }else{ 
                                         // TODO: Turn this into internal error - pass message to re auth with disc.
                                         res.status(401).json({
@@ -296,21 +299,14 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                 }
                             }
                         }
-                        next();
-
                     }catch (err){
                         next(err)
-
                     }
                 }
-            }else{
-                next();
-
             }
         }catch(err){
             next(err)
         }
-
     }else{
         // Redirect
         res.status(401).json({

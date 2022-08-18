@@ -1,5 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import { createClient, RedisClientType } from 'redis';
+import { PrismaClient } from '@prisma/client'
 import session from 'express-session';
 import { Env } from './utils/startup';
 import { TOKEN_TTL_IN_SECONDS } from './utils/constants';
@@ -7,13 +8,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rootRouter from './routes/root';
 import authRouter from './routes/auth';
+import accRouter from './routes/acc';
 import dotenv from 'dotenv';
 import requestip from 'request-ip';
 import compression from 'compression';
 
 dotenv.config();
 
-const env: Env = new Env();
+export const env: Env = new Env();
 const app: Express = express();
 
 declare module 'express-session' {
@@ -37,6 +39,8 @@ export const redisClient: RedisClientType = createClient(env.GetRedisClientOptio
     }
 )();
 
+export const prisma: PrismaClient = new PrismaClient(); // TODO: Configure logging.
+
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
@@ -49,7 +53,7 @@ app.use(session({
         }),
         cookie: {
             httpOnly: true,
-            secure: true
+            //secure: true // TODO set a prod arg
         },
         saveUninitialized: false,
         resave: false
@@ -61,8 +65,13 @@ app.use(compression());
 
 app.disable('x-powered-by');
 
+
 app.use('/api/v0/', rootRouter);
 app.use('/api/v0/', authRouter);
+app.use('/api/v0/', accRouter);
+app.use('/', rootRouter);
+
+
 
 app.use((err: any, _req: Request, _res: Response, next: NextFunction) => {
     console.log('%s %s: %s ', new Date().toUTCString(), err.name, err.message);

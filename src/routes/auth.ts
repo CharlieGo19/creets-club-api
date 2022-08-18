@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction, response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { AppleAuthLogic, DiscAuthLogic } from '../controllers/auth.controller';
 
 const authRouter: Router = Router();
