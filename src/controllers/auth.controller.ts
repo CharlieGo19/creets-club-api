@@ -149,7 +149,6 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         req.session.authenticated = true;
                         req.session.user = {
                             discName: userData.disc_id,
-                            discAvatar: discAtMeResp.data.avatar,
                             bearerToken: newBearerHash
                         }
                         res.status(200).json({
@@ -262,7 +261,6 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                             req.session.authenticated = true;
                                             req.session.user = {
                                                 discName: userTokens.disc_id,
-                                                discAvatar: 'moonShine', // TODO: Populate real data
                                                 bearerToken: newBearerHash
                                             };
 

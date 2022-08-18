@@ -21,7 +21,6 @@ declare module 'express-session' {
         authenticated: boolean,
         user: {
             discName: string,
-            discAvatar: string,
             bearerToken: string
         }
     }
