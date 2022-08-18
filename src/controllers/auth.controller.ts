@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import e, { NextFunction, Request, Response } from 'express';
 import { Env } from '../utils/startup';
 import { OAUTH_PROVERIDER_DISCORD, TOKEN_TTL_IN_MILLISECONDS } from '../utils/constants'
 import dotenv from 'dotenv';
@@ -63,7 +63,6 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
 
     if (!req.query.code) {
         next(discServerErr);
-
     }else{
         if (env.IsSet()) {
             console.log('Submitted to discord...');
@@ -75,107 +74,102 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
             discBearerTokenCallBody.append('redirect_uri', env.GetDisAuthRedirUrl());
 
             const discTokenResp: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> | undefined = await redeemDiscordToken(discBearerTokenCallBody, next);
-            if (isAxiosResponse(discTokenResp)) {
+            if (isAxiosResponseBon(discTokenResp)) {
                 const atMeReqOptions: AxiosRequestConfig = {
                     url: env.GetDiscIdentityUrl(),
                     method: 'GET',
                     headers: {
-                        Authorization: 'Bearer ' + discTokenResp.data.access_token,
+                        Authorization: 'Bearer ' + discTokenResp?.data.access_token,
                     },
                 }
 
                 const discAtMeResp: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> = await axios(atMeReqOptions);
-                try {
-                    const userData: {
-                        'user_id': number,
-                        'disc_id': string,
-                        'user_login_info': {
-                            'session_id': string | null
-                        } | null
-                    } = await prisma.users.findUniqueOrThrow({
-                        where: {
-                            disc_id: discAtMeResp.data.username + "#" + discAtMeResp.data.discriminator
-                        },
-                        select: {
-                            user_id: true,
-                            disc_id: true,
-                            user_login_info: {
-                                select: {
-                                    session_active: true,
-                                    session_id: true
+                if(isDiscordAtMeResponseBon(discAtMeResp)) {
+                    try {
+                        const userData: {
+                            'user_id': number,
+                            'disc_id': string,
+                            'user_login_info': {
+                                'session_id': string | null
+                            } | null
+                        } = await prisma.users.findUniqueOrThrow({
+                            where: {
+                                disc_id: discAtMeResp.data.username + "#" + discAtMeResp.data.discriminator
+                            },
+                            select: {
+                                user_id: true,
+                                disc_id: true,
+                                user_login_info: {
+                                    select: {
+                                        session_active: true,
+                                        session_id: true
+                                    }
                                 }
                             }
+                        });
+                        // Check if there is a previous session, remove if so, we don't want a user spamming inserting multiple keys.
+                        if (userData.user_login_info != null && userData.user_login_info.session_id != null) {
+                            try {
+                                // Do not check response, if it didn't exist, we are ok.
+                                await redisClient.v4.del(`gtm:${userData.user_login_info.session_id}`);
+                            }catch(err){
+                                next(err);
+                            }
                         }
-                    });
-
-                    // Check if there is a previous session, remove if so, we don't want a user spamming inserting multiple keys.
-                    if (userData.user_login_info != null && userData.user_login_info.session_id != null) {
-                        try {
-                            // Do not check response, if it didn't exist, we are ok.
-                            await redisClient.v4.del(`gtm:${userData.user_login_info.session_id}`);
-
-                        }catch(err){
-                            next(err);
-
+                        // TODO: Check if origin_ip is null, if null, update.
+                        await prisma.user_login_info.upsert({
+                            where: {
+                                user_id: userData.user_id
+                            },
+                            create: {
+                                user_id: userData.user_id,
+                                init_ip: req.clientIp,
+                                last_ip: req.clientIp,
+                                last_interaction: new Date(new Date().getUTCDate()),
+                                session_active: true,
+                                session_expires: new Date(new Date().getUTCDate() + TOKEN_TTL_IN_MILLISECONDS),
+                                session_id: req.sessionID,
+                                oauth_provider: OAUTH_PROVERIDER_DISCORD,
+                                bearer_token: discTokenResp?.data.access_token,
+                                refresh_token: discTokenResp?.data.refresh_token
+                            },
+                            update: {
+                                last_ip: req.clientIp,
+                                last_interaction: new Date(new Date().getUTCDate()),
+                                session_active: true,
+                                session_expires: new Date(new Date().getUTCDate() + TOKEN_TTL_IN_MILLISECONDS),
+                                session_id: req.sessionID,
+                                oauth_provider: OAUTH_PROVERIDER_DISCORD,
+                                bearer_token: discTokenResp?.data.access_token,
+                                refresh_token: discTokenResp?.data.refresh_token
+                            }
+                        });
+                        // @ts-ignore
+                        const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?}
+                        req.session.authenticated = true;
+                        req.session.user = {
+                            discName: userData.disc_id,
+                            discAvatar: discAtMeResp.data.avatar,
+                            bearerToken: newBearerHash
                         }
+                        res.status(200).json({
+                            status: 200,
+                            statusText: '200 OK.',
+                        });
+                    }catch(err){
+                        res.status(401).json({
+                            status: 401,
+                            statusText: '401 Unauthorised.'
+                        });
                     }
-
-                    // TODO: Check if origin_ip is null, if null, update.
-                    await prisma.user_login_info.upsert({
-                        where: {
-                            user_id: userData.user_id
-                        },
-                        create: {
-                            user_id: userData.user_id,
-                            init_ip: req.clientIp,
-                            last_ip: req.clientIp,
-                            last_interaction: new Date(new Date().getUTCDate()),
-                            session_active: true,
-                            session_expires: new Date(new Date().getUTCDate() + TOKEN_TTL_IN_MILLISECONDS),
-                            session_id: req.sessionID,
-                            oauth_provider: OAUTH_PROVERIDER_DISCORD,
-                            bearer_token: discTokenResp.data.access_token,
-                            refresh_token: discTokenResp.data.refresh_token
-                        },
-                        update: {
-                            last_ip: req.clientIp,
-                            last_interaction: new Date(new Date().getUTCDate()),
-                            session_active: true,
-                            session_expires: new Date(new Date().getUTCDate() + TOKEN_TTL_IN_MILLISECONDS),
-                            session_id: req.sessionID,
-                            oauth_provider: OAUTH_PROVERIDER_DISCORD,
-                            bearer_token: discTokenResp.data.access_token,
-                            refresh_token: discTokenResp.data.refresh_token
-                        }
-                    });
-
-                    const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?
-                    req.session.authenticated = true;
-                    req.session.user = {
-                        discName: userData.disc_id,
-                        discAvatar: discAtMeResp.data.avatar,
-                        bearerToken: newBearerHash
-                    }
-
-                    res.status(200).json({
-                        status: 200,
-                        statusText: '200 OK.',
-                    });
-
-                }catch(err){
-                    res.status(401).json({
-                        status: 401,
-                        statusText: '401 Unauthorised.'
-                    });
+                }else{
+                    next(discServerErr);
                 }
-
             }else{
                 next(discRespErr);
-
             }
         }else{
             next(discServerErr);
-
         }
     }
 }
@@ -262,7 +256,8 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                         };
 
                                         const discTokenResp: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> | undefined = await redeemDiscordToken(discRefreshTokenCallBody, next);
-                                        if (isAxiosResponse(discTokenResp)) {
+                                        if (isAxiosResponseBon(discTokenResp)) {
+                                            // @ts-ignore
                                             const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?
                                             req.session.authenticated = true;
                                             req.session.user = {
@@ -283,8 +278,8 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                                         session_active: true,
                                                         session_id: req.sessionID,
                                                         oauth_provider: OAUTH_PROVERIDER_DISCORD,
-                                                        bearer_token: discTokenResp.data.access_token,
-                                                        refresh_token: discTokenResp.data.refresh_token
+                                                        bearer_token: discTokenResp?.data.access_token,
+                                                        refresh_token: discTokenResp?.data.refresh_token
                                                     }
                                                 });
                                             }catch(err){
@@ -359,12 +354,18 @@ async function redeemDiscordToken(params: URLSearchParams, next: NextFunction)
         }
 }
 
-function isAxiosResponse(response: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> | undefined)
-    : response is AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> {
-        return(response as AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData>).data.access_token !== undefined;
+function isAxiosResponseBon(response: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> | undefined): boolean {
+    if (response !== undefined && response.data?.access_token !== undefined) {
+        return true;
+    }else{
+        return false;
+    }
 }
 
-function isDiscordAtMeResponse(response: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData>)
-    : response is AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> {
-        return (response as AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData>).data.username !== undefined;
+function isDiscordAtMeResponseBon(response: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> | undefined): boolean {
+    if (response !== undefined && response.data?.username !== undefined) {
+        return true;
+    }else{
+        return false;
+    }
 }
