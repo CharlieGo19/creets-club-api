@@ -81,19 +81,22 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
 
                 const discAtMeResp: AxiosResponse<DiscordIdentifyUserData, DiscordIdentifyRequestData> = await axios(atMeReqOptions);
                 if(isDiscordAtMeResponseBon(discAtMeResp)) {
+                    // TODO: Remove unused fields in userData & use fresh returned.
                     try {
                         const userData: {
                             'user_id': number,
+                            'disc_name': string,
                             'disc_id': string,
                             'user_login_info': {
                                 'session_id': string | null
                             } | null
                         } = await prisma.users.findUniqueOrThrow({
                             where: {
-                                disc_id: discAtMeResp.data.username + "#" + discAtMeResp.data.discriminator
+                                disc_name: discAtMeResp.data.username + "#" + discAtMeResp.data.discriminator
                             },
                             select: {
                                 user_id: true,
+                                disc_name: true,
                                 disc_id: true,
                                 user_login_info: {
                                     select: {
@@ -152,7 +155,9 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?}
                         req.session.authenticated = true;
                         req.session.user = {
-                            discName: userData.disc_id,
+                            discName: discAtMeResp.data.username + "#" + discAtMeResp.data.discriminator,
+                            discID: discAtMeResp.data.id,
+                            discAvatar: discAtMeResp.data.avatar,
                             bearerToken: newBearerHash
                         }
                         res.status(200).json({
@@ -202,18 +207,22 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                     try {
                         const userTokens: {
                             'user_id': number,
+                            'disc_name': string,
                             'disc_id': string,
+                            'disc_avatar': string | null,
                             'user_login_info': {
                                 'bearer_token': string | null,
                                 'refresh_token': string | null
                             } | null
                         } = await prisma.users.findUniqueOrThrow({
                             where: {
-                                disc_id: req.session.user.discName
+                                disc_name: req.session.user.discName
                             },
                             select: {
                                 user_id: true,
+                                disc_name: true,
                                 disc_id: true,
+                                disc_avatar: true,
                                 user_login_info: {
                                     select: {
                                         bearer_token: true,
@@ -264,7 +273,9 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                             const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?
                                             req.session.authenticated = true;
                                             req.session.user = {
-                                                discName: userTokens.disc_id,
+                                                discName: userTokens.disc_name,
+                                                discID: userTokens.disc_id,
+                                                discAvatar: userTokens.disc_avatar,
                                                 bearerToken: newBearerHash
                                             };
 

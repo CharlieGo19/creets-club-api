@@ -23,7 +23,8 @@ model user_login_info {
 
 model users {
   user_id         Int              @id @default(autoincrement())
-  disc_id         String           @unique @db.VarChar(37)
+  disc_name       String           @unique @db.VarChar(37)
+  disc_id         String           @unique @db.VarChar(256)
   disc_avatar     String?          @db.VarChar(256)
   user_login_info user_login_info?
 }

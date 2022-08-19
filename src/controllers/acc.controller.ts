@@ -4,7 +4,8 @@ import { authUser } from './auth.controller';
 
 export interface UserData {
     disc_name: string,
-    disc_avatar: string
+    disc_id: string,
+    disc_avatar: string | null
 }
 
 export async function WhoAmI(req: Request, res: Response, next: NextFunction): Promise<UserData | undefined> {
@@ -16,9 +17,10 @@ export async function WhoAmI(req: Request, res: Response, next: NextFunction): P
         const user: UserData = await prisma.users.findUniqueOrThrow({
             where: {
                 // @ts-ignore
-                disc_id: req.session.user?.discName
+                disc_name: req.session.user?.discName
             },
             select: {
+                disc_name: true,
                 disc_id: true,
                 disc_avatar: true
             }

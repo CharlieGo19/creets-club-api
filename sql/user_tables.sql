@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL,
-    disc_id VARCHAR(37) NOT NULL UNIQUE,
+    disc_name VARCHAR(37) NOT NULL UNIQUE,
+    disc_id VARCHAR(256) NOT NULL UNIQUE,
     disc_avatar VARCHAR(256),
     PRIMARY KEY (user_id)
 );

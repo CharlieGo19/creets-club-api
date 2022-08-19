@@ -1,4 +1,4 @@
-INSERT INTO users (disc_id) VALUES 
+INSERT INTO users (disc_name) VALUES 
     ('Uriah#6969'),
     ('Don Hector#3191'),
     ('CharlieGo_#7848'),
