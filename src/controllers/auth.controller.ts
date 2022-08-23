@@ -121,6 +121,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                                 user_id:  userData.user_id
                             },
                             data: {
+                                disc_id: discAtMeResp.data.id,
                                 disc_avatar: discAtMeResp.data.avatar
                             }
                         });
