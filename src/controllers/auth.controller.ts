@@ -86,7 +86,7 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                         const userData: {
                             'user_id': number,
                             'disc_name': string,
-                            'disc_id': string,
+                            'disc_id': string | null,
                             'user_login_info': {
                                 'session_id': string | null
                             } | null
@@ -161,11 +161,13 @@ export async function DiscAuthLogic(req: Request, res: Response, next: NextFunct
                             discAvatar: discAtMeResp.data.avatar,
                             bearerToken: newBearerHash
                         }
+                        console.log(req.session.user)
                         res.status(200).json({
                             status: 200,
                             statusText: '200 OK.',
                         });
                     }catch(err){
+                        console.log(err)
                         res.status(401).json({
                             status: 401,
                             statusText: '401 Unauthorised.'
@@ -209,7 +211,7 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                         const userTokens: {
                             'user_id': number,
                             'disc_name': string,
-                            'disc_id': string,
+                            'disc_id': string | null,
                             'disc_avatar': string | null,
                             'user_login_info': {
                                 'bearer_token': string | null,
@@ -271,7 +273,7 @@ export async function authUser(req: Request, res: Response, next: NextFunction):
                                         const discTokenResp: AxiosResponse<DiscordOAuthBearerData, DiscordOAuthRequestData> | undefined = await redeemDiscordToken(discRefreshTokenCallBody, next);
                                         if (isAxiosResponseBon(discTokenResp)) {
                                             // @ts-ignore
-                                            const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64); // TODO: Add a salt?
+                                            const newBearerHash: string = SHA256(discTokenResp.data.access_token).toString(enc.Base64);
                                             req.session.authenticated = true;
                                             req.session.user = {
                                                 discName: userTokens.disc_name,

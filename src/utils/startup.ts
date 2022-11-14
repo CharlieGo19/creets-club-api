@@ -13,6 +13,8 @@ export class Env {
     #redisUrl: string | undefined
     #redisUser: string | undefined
     #redisPassword: string | undefined
+    #sessionSecret: string | undefined
+    #sessionSecure: boolean
 
     constructor() {
         const dateTime: string = new Date().toUTCString();
@@ -83,6 +85,23 @@ export class Env {
 
         if (process.env.REDIS_PASSWORD) {
             this.#redisPassword = process.env.REDIS_PASSWORD;
+        }
+
+        if (!process.env.SESSION_SECRET) {
+            console.log(`${dateTime} SESSION_SECRET UNDEFINED: Exiting... Can not continue...`);
+        } else {
+            this.#sessionSecret = process.env.SESSION_SECRET;
+        }
+
+        if (!process.env.SESSION_SECURE) {
+            // default to true, to prevent mistakenly setting false for production.
+            this.#sessionSecure = true; 
+        } else {
+            if (process.env.SESSION_SECURE === "false") {
+                this.#sessionSecure = false;
+            } else {
+                this.#sessionSecure = true;
+            }
         }
     }
 
@@ -164,5 +183,13 @@ export class Env {
                 legacyMode: true
             }
         }
+    }
+
+    GetSessionSecret(): string | undefined {
+        return this.#sessionSecret;
+    }
+    
+    GetSessionSecure(): boolean {
+        return this.#sessionSecure;
     }
 }

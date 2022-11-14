@@ -23,14 +23,14 @@ declare module 'express-session' {
         authenticated: boolean,
         user: {
             discName: string,
-            discID: string,
+            discID: string | null,
             discAvatar: string | null,
             bearerToken: string
         }
     }
 };
 
-let redisStore = require('connect-redis')(session);
+const redisStore = require('connect-redis')(session);
 // TODO: Set production env variables in client and connect remotely.
 export const redisClient: RedisClientType = createClient(env.GetRedisClientOptions());
 
@@ -46,8 +46,9 @@ export const prisma: PrismaClient = new PrismaClient(); // TODO: Configure loggi
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
-app.use(session({
-        secret: 'abcd', // TODO: Session Secret Rotation
+app.use(
+    session({
+        secret: <string>env.GetSessionSecret(),
         store: new redisStore({
             client: redisClient,
             prefix: 'gtm:',
@@ -55,7 +56,7 @@ app.use(session({
         }),
         cookie: {
             httpOnly: true,
-            //secure: true // TODO set a prod arg
+            secure: env.GetSessionSecure()
         },
         saveUninitialized: false,
         resave: false
@@ -67,13 +68,10 @@ app.use(compression());
 
 app.disable('x-powered-by');
 
-
 app.use('/api/v0/', rootRouter);
 app.use('/api/v0/', authRouter);
 app.use('/api/v0/', accRouter);
 app.use('/', rootRouter);
-
-
 
 app.use((err: any, _req: Request, _res: Response, next: NextFunction) => {
     console.log('%s %s: %s ', new Date().toUTCString(), err.name, err.message);

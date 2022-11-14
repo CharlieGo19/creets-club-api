@@ -24,7 +24,18 @@ model user_login_info {
 model users {
   user_id         Int              @id @default(autoincrement())
   disc_name       String           @unique @db.VarChar(37)
-  disc_id         String           @unique @db.VarChar(256)
+  disc_id         String?          @unique @db.VarChar(256)
   disc_avatar     String?          @db.VarChar(256)
   user_login_info user_login_info?
+  game_user_info  game_user_info[]
+}
+
+model game_user_info {
+  user_id  Int     @id
+  in_game  Boolean @default(false)
+  conn_id  String? @unique @db.VarChar(20)
+  board_id String? @db.VarChar(36)
+  wins     Int     @default(0)
+  losses   Int     @default(0)
+  users    users   @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_game_user_info")
 }

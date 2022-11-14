@@ -5,9 +5,9 @@ services:
     image: postgres
     restart: always
     environment:
-      POSTGRES_PASSWORD: "postgres"
-      POSTGRES_USER: "postgres"
-      POSTGRES_DB: "gtm-users"
+      POSTGRES_PASSWORD: "postgres"                                           # Add env var.
+      POSTGRES_USER: "postgres"                                               # Add env var.
+      POSTGRES_DB: "gtm-users"                                                # Create seperate DB's for CREETs and GTM.
     logging:
       options:
         max-size: 10m
@@ -15,7 +15,8 @@ services:
     volumes:
       - ./local_data_psql:/var/lib/postgresql/data
       - ./sql/user_tables.sql:/docker-entrypoint-initdb.d/1.sql
-      - ./sql/populate_alpha_users.sql:/docker-entrypoint-initdb.d/2.sql
+      - ./sql/game_tables.sql:/docker-entrypoint-initdb.d/2.sql
+      - ./sql/populate_alpha_users.sql:/docker-entrypoint-initdb.d/3.sql
     ports:
       - "3003:5432"
   gtm-session-db:
